@@ -2,7 +2,7 @@ package database
 
 import (
 	"log"
-	"contactService/model"
+	"CRUDRestAPI/model"
 
 	"github.com/jinzhu/gorm"
 )

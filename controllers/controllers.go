@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"contactService/database"
-	"contactService/model"
+	"CRUDRestAPI/database"
+	"CRUDRestAPI/model"
 	"strconv"
 
 	"github.com/gorilla/mux"

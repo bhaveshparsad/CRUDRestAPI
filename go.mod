@@ -1,4 +1,4 @@
-module contactService
+module CRUDRestAPI
 
 go 1.18
 

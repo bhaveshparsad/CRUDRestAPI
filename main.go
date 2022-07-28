@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
-	"contactService/controllers"
-	"contactService/database"
-	"contactService/model"
+	"CRUDRestAPI/controllers"
+	"CRUDRestAPI/database"
+	"CRUDRestAPI/model"
 
 	"github.com/gorilla/mux"
 	_ "github.com/jinzhu/gorm/dialects/mysql" //Required for MySQL dialect
