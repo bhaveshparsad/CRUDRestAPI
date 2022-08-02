@@ -21,11 +21,11 @@ func main() {
 }
 
 func initaliseHandlers(router *mux.Router) {
-	router.HandleFunc("/create", controllers.CreatePerson).Methods("POST")
-	router.HandleFunc("/get", controllers.GetAllPerson).Methods("GET")
-	router.HandleFunc("/get/{id}", controllers.GetPersonByID).Methods("GET")
-	router.HandleFunc("/update/{id}", controllers.UpdatePersonByID).Methods("PUT")
-	router.HandleFunc("/delete/{id}", controllers.DeletPersonByID).Methods("DELETE")
+	router.HandleFunc("/users", controllers.CreatePerson).Methods("POST")
+	router.HandleFunc("/users", controllers.GetAllPerson).Methods("GET")
+	router.HandleFunc("/users/{id}", controllers.GetPersonByID).Methods("GET")
+	router.HandleFunc("/users/{id}", controllers.UpdatePersonByID).Methods("PUT")
+	router.HandleFunc("/users/{id}", controllers.DeletPersonByID).Methods("DELETE")
 }
 
 func initDB() {
