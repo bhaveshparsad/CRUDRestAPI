@@ -8,7 +8,7 @@ import (
 	"CRUDRestAPI/model"
 
 	"github.com/gorilla/mux"
-	_ "github.com/jinzhu/gorm/dialects/mysql" //Required for MySQL dialect
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 func main() {
@@ -25,7 +25,7 @@ func initaliseHandlers(router *mux.Router) {
 	router.HandleFunc("/users", controllers.GetAllPerson).Methods("GET")
 	router.HandleFunc("/users/{id}", controllers.GetPersonByID).Methods("GET")
 	router.HandleFunc("/users/{id}", controllers.UpdatePersonByID).Methods("PUT")
-	router.HandleFunc("/users/{id}", controllers.DeletPersonByID).Methods("DELETE")
+	router.HandleFunc("/users/{id}", controllers.DeletePersonByID).Methods("DELETE")
 }
 
 func initDB() {

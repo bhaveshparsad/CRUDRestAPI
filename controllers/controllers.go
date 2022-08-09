@@ -2,66 +2,131 @@ package controllers
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"net/http"
+	"errors"
 	"CRUDRestAPI/database"
 	"CRUDRestAPI/model"
+	"log"
+	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/jinzhu/gorm"
 )
 
-//GetAllPerson get all person data
-func GetAllPerson(w http.ResponseWriter, r *http.Request) {
-	var persons []model.ContactService
-	database.Connector.Find(&persons)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(persons)
+func respondError(w http.ResponseWriter, code int, message string) {
+	respondJson(w, code, map[string]string{"error": message})
 }
 
-//GetPersonByID returns person with specific ID
+func respondJson(w http.ResponseWriter, code int, payload interface{}) {
+	response, _ := json.Marshal(payload)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(response)
+}
+
+func GetAllPerson(w http.ResponseWriter, r *http.Request) {
+	var contacts []model.ContactService
+	result := database.Connector.Find(&contacts)
+	if result.Error != nil {
+		respondError(w, http.StatusInternalServerError, "not found")
+	}
+	respondJson(w, http.StatusOK, contacts)
+}
+
 func GetPersonByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	_, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid person ID")
+
+	}
 	key := vars["id"]
 
-	var person model.ContactService
-	database.Connector.First(&person, key)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(person)
+	var contact model.ContactService
+	result := database.Connector.First(&contact, key)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			respondError(w, http.StatusNotFound, "error occurred while fetching person with given id")
+		} else {
+			respondError(w, http.StatusInternalServerError, err.Error())
+		}
+
+	}
+	respondJson(w, http.StatusOK, contact)
 }
 
-//CreatePerson creates person
 func CreatePerson(w http.ResponseWriter, r *http.Request) {
-	requestBody, _ := ioutil.ReadAll(r.Body)
-	var person model.ContactService
-	json.Unmarshal(requestBody, &person)
+	var contact model.ContactService
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&contact); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request")
+	}
 
-	database.Connector.Create(person)
+	result := database.Connector.Create(contact)
+	if result.Error != nil && result.RowsAffected != 1 {
+		log.Fatal(result.Error)
+		respondError(w, http.StatusNotFound, "error occurred while creating a new person")
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(person)
+	json.NewEncoder(w).Encode(contact)
 }
 
-//UpdatePersonByID updates person with respective ID
 func UpdatePersonByID(w http.ResponseWriter, r *http.Request) {
-	requestBody, _ := ioutil.ReadAll(r.Body)
-	var person model.ContactService
-	json.Unmarshal(requestBody, &person)
-	database.Connector.Save(&person)
+	var contact model.ContactService
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&contact); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request")
+	}
+
+	vars := mux.Vars(r)
+	_, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid contact ID")
+		return
+	}
+
+	var value model.ContactService
+	result := database.Connector.First(&value, "id=?", contact.ID)
+	if result.Error != nil {
+		log.Fatal(result.Error)
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			respondError(w, http.StatusNotFound, "error ocurred while updating contact with given id")
+		} else {
+			respondError(w, http.StatusInternalServerError, err.Error())
+		}
+	}
+
+	value.FirstName = contact.FirstName
+	value.LastName = contact.LastName
+	re := database.Connector.Save(&value)
+	if re.RowsAffected != 1 {
+		respondError(w, http.StatusInternalServerError, "error in updating contact")
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(person)
+	json.NewEncoder(w).Encode(value)
 }
 
-//DeletPersonByID delete's person with specific ID
-func DeletPersonByID(w http.ResponseWriter, r *http.Request) {
+func DeletePersonByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	_, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid contact ID")
+		return
+	}
 	key := vars["id"]
 
-	var person model.ContactService
+	var contact model.ContactService
+
 	id, _ := strconv.ParseInt(key, 10, 64)
-	database.Connector.Where("id = ?", id).Delete(&person)
+	result := database.Connector.Where("id = ?", id).Delete(&contact)
+	if result.RowsAffected != 1 {
+		respondError(w, http.StatusInternalServerError, "error ocurred while deleting contact")
+	}
+
 	w.WriteHeader(http.StatusNoContent)
 }
