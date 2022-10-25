@@ -1,9 +1,10 @@
 package model
 
-//Person object for REST(CRUD)
-type ContactService struct {
-	ID        int    `json:"id"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Email     string  `json:"email"`
+import "gorm.io/gorm"
+
+type Contact struct {
+	gorm.Model
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
+	EmailId   string `json:"email"`
 }
